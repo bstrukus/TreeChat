@@ -7,6 +7,6 @@ namespace TreeChat
 	/// </summary>
 	public class TreeChat : Mod
 	{
-	
+		// Code goes here
 	}
 }
