@@ -1,0 +1,3 @@
+displayName = Tree Chat
+author = BStrukus
+version = 0.1
