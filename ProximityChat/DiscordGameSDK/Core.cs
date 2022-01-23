@@ -1064,6 +1064,7 @@ namespace Discord
       callback(level, message);
     }
 
+    static FFIMethods.SetLogHookCallback staticSetLogHookCallback = SetLogHookCallbackImpl;
     public void SetLogHook(LogLevel minLevel, SetLogHookHandler callback)
     {
       if (setLogHook.HasValue)
@@ -1071,7 +1072,7 @@ namespace Discord
         setLogHook.Value.Free();
       }
       setLogHook = GCHandle.Alloc(callback);
-      Methods.SetLogHook(MethodsPtr, minLevel, GCHandle.ToIntPtr(setLogHook.Value), SetLogHookCallbackImpl);
+      Methods.SetLogHook(MethodsPtr, minLevel, GCHandle.ToIntPtr(setLogHook.Value), staticSetLogHookCallback);
     }
 
     public ApplicationManager GetApplicationManager()
@@ -2463,9 +2464,7 @@ namespace Discord
       callback(result, ref lobby);
     }
 
-    // This line ensures that the callback is not collected by GC
     static FFIMethods.CreateLobbyCallback staticCreateLobbyCallback = CreateLobbyCallbackImpl;
-
     public void CreateLobby(LobbyTransaction transaction, CreateLobbyHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
@@ -2482,10 +2481,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.UpdateLobbyCallback staticUpdateLobbyCallback = UpdateLobbyCallbackImpl;
     public void UpdateLobby(Int64 lobbyId, LobbyTransaction transaction, UpdateLobbyHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.UpdateLobby(MethodsPtr, lobbyId, transaction.MethodsPtr, GCHandle.ToIntPtr(wrapped), UpdateLobbyCallbackImpl);
+      Methods.UpdateLobby(MethodsPtr, lobbyId, transaction.MethodsPtr, GCHandle.ToIntPtr(wrapped), staticUpdateLobbyCallback);
       transaction.MethodsPtr = IntPtr.Zero;
     }
 
@@ -2498,10 +2498,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.DeleteLobbyCallback staticDeleteLobbyCallback = DeleteLobbyCallbackImpl;
     public void DeleteLobby(Int64 lobbyId, DeleteLobbyHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.DeleteLobby(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), DeleteLobbyCallbackImpl);
+      Methods.DeleteLobby(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), staticDeleteLobbyCallback);
     }
 
     [MonoPInvokeCallback]
@@ -2513,10 +2514,11 @@ namespace Discord
       callback(result, ref lobby);
     }
 
+    static FFIMethods.ConnectLobbyCallback staticConnectLobbyCallback = ConnectLobbyCallbackImpl;
     public void ConnectLobby(Int64 lobbyId, string secret, ConnectLobbyHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.ConnectLobby(MethodsPtr, lobbyId, secret, GCHandle.ToIntPtr(wrapped), ConnectLobbyCallbackImpl);
+      Methods.ConnectLobby(MethodsPtr, lobbyId, secret, GCHandle.ToIntPtr(wrapped), staticConnectLobbyCallback);
     }
 
     [MonoPInvokeCallback]
@@ -2528,10 +2530,11 @@ namespace Discord
       callback(result, ref lobby);
     }
 
+    static FFIMethods.ConnectLobbyWithActivitySecretCallback staticConnectLobbyWithSecretCallback = ConnectLobbyWithActivitySecretCallbackImpl;
     public void ConnectLobbyWithActivitySecret(string activitySecret, ConnectLobbyWithActivitySecretHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.ConnectLobbyWithActivitySecret(MethodsPtr, activitySecret, GCHandle.ToIntPtr(wrapped), ConnectLobbyWithActivitySecretCallbackImpl);
+      Methods.ConnectLobbyWithActivitySecret(MethodsPtr, activitySecret, GCHandle.ToIntPtr(wrapped), staticConnectLobbyWithSecretCallback);
     }
 
     [MonoPInvokeCallback]
@@ -2543,10 +2546,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.DisconnectLobbyCallback staticDisconnectLobbyCallback = DisconnectLobbyCallbackImpl;
     public void DisconnectLobby(Int64 lobbyId, DisconnectLobbyHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.DisconnectLobby(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), DisconnectLobbyCallbackImpl);
+      Methods.DisconnectLobby(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), staticDisconnectLobbyCallback);
     }
 
     public Lobby GetLobby(Int64 lobbyId)
@@ -2695,10 +2699,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.SendLobbyMessageCallback staticSendLobbyMessageCallback = SendLobbyMessageCallbackImpl;
     public void SendLobbyMessage(Int64 lobbyId, byte[] data, SendLobbyMessageHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.SendLobbyMessage(MethodsPtr, lobbyId, data, data.Length, GCHandle.ToIntPtr(wrapped), SendLobbyMessageCallbackImpl);
+      Methods.SendLobbyMessage(MethodsPtr, lobbyId, data, data.Length, GCHandle.ToIntPtr(wrapped), staticSendLobbyMessageCallback);
     }
 
     public LobbySearchQuery GetSearchQuery()
@@ -2755,10 +2760,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.ConnectVoiceCallback staticConnectVoiceCallback = ConnectVoiceCallbackImpl;
     public void ConnectVoice(Int64 lobbyId, ConnectVoiceHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.ConnectVoice(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), ConnectVoiceCallbackImpl);
+      Methods.ConnectVoice(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), staticConnectVoiceCallback);
     }
 
     [MonoPInvokeCallback]
@@ -2770,10 +2776,11 @@ namespace Discord
       callback(result);
     }
 
+    static FFIMethods.DisconnectVoiceCallback staticDisconnectVoiceCallback = DisconnectVoiceCallbackImpl;
     public void DisconnectVoice(Int64 lobbyId, DisconnectVoiceHandler callback)
     {
       GCHandle wrapped = GCHandle.Alloc(callback);
-      Methods.DisconnectVoice(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), DisconnectVoiceCallbackImpl);
+      Methods.DisconnectVoice(MethodsPtr, lobbyId, GCHandle.ToIntPtr(wrapped), staticDisconnectVoiceCallback);
     }
 
     public void ConnectNetwork(Int64 lobbyId)
