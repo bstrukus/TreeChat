@@ -215,6 +215,8 @@ namespace ProximityMine
 
     private void OnLobbyCreateResult(Discord.Result result, ref Discord.Lobby lobby)
     {
+      LogStringInfo($"Lobby Create Result: {result}");
+
       var lobbyManager = _discord.GetLobbyManager();
       if (result != Discord.Result.Ok)
       {
