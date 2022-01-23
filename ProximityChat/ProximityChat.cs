@@ -16,14 +16,27 @@ namespace ProximityMine
     public long UserId => _currentUserId;
     public int UserCount => _players.Count;
 
+    public float VoiceMinDistance
+    {
+      get => _voiceMinDistance;
+      set => _voiceMinDistance = value;
+    }
+
+    public float VoiceMaxDistance
+    {
+      get => _voiceMaxDistance;
+      set => _voiceMaxDistance = value;
+    }
+
     private static readonly long kClientId = 926574841237209158;
 
-    private bool _userInitialized = false;
     private long _currentUserId = 0;
     private long _currentLobbyId = 0;
     private long _currentLobbyOwnerId = 0;
     private bool _isJoiningLobby = false;
     private uint _lobbyCapacity = 4;
+    private float _voiceMinDistance = 1;
+    private float _voiceMaxDistance = 10;
     private string _playerGameId = null;
     private Discord.Discord _discord;
     private List<Player> _players = new List<Player>();
@@ -66,12 +79,13 @@ namespace ProximityMine
 
     public void Update()
     {
-      Player localPlayer = GetPlayer(LobbyOwnerId);
-      if (localPlayer != null)
+      if (_players.Count > 0)
       {
+        // Local player is always player 0
+        Player localPlayer = _players[0];
         var voiceManager = _discord.GetVoiceManager();
 
-        // Local player is always player 0
+        // Calculate distance to every other player
         for (int i = 1; i < _players.Count; ++i)
         {
           Player remotePlayer = _players[i];
@@ -79,7 +93,8 @@ namespace ProximityMine
           float yDelta = (remotePlayer.Y - localPlayer.Y);
           float zDelta = (remotePlayer.Z - localPlayer.Z);
           float distToPlayer = (float)Math.Sqrt(xDelta * xDelta + yDelta * yDelta + zDelta * zDelta);
-          float volume = 1.0f - (distToPlayer / 10.0f);
+          float distScalar = (distToPlayer - _voiceMinDistance) / (_voiceMaxDistance - _voiceMinDistance);
+          float volume = 1.0f - Math.Clamp(distScalar, 0f, 1f);
 
           voiceManager.SetLocalVolume(remotePlayer.DiscordId, (byte)(volume * 200));
         }
@@ -213,6 +228,17 @@ namespace ProximityMine
       return null;
     }
 
+    private void CreateDefaultLobby()
+    {
+      // Create a lobby for our local game
+      var lobbyManager = _discord.GetLobbyManager();
+      var lobbyTxn = lobbyManager.GetLobbyCreateTransaction();
+      lobbyTxn.SetCapacity(_lobbyCapacity);
+      lobbyTxn.SetType(Discord.LobbyType.Private);
+
+      lobbyManager.CreateLobby(lobbyTxn, OnLobbyCreateResult);
+    }
+
     private void OnDiscordLog(Discord.LogLevel level, string message)
     {
       LogStringInfo($"Discord: [{level}] {message}");
@@ -227,21 +253,17 @@ namespace ProximityMine
     {
       LogStringInfo($"Lobby Create Result: {result}");
 
-      var lobbyManager = _discord.GetLobbyManager();
+      // If the lobby failed to create for some reason - try again
       if (result != Discord.Result.Ok)
       {
-        // Create a lobby for our local game
-        var lobbyTxn = lobbyManager.GetLobbyCreateTransaction();
-        lobbyTxn.SetCapacity(_lobbyCapacity);
-        lobbyTxn.SetType(Discord.LobbyType.Private);
-
-        lobbyManager.CreateLobby(lobbyTxn, OnLobbyCreateResult);
+        CreateDefaultLobby();
         return;
       }
 
       UpdateActivity(lobby);
 
       // Connect to the network of this lobby and send everyone a message
+      var lobbyManager = _discord.GetLobbyManager();
       lobbyManager.ConnectNetwork(lobby.Id);
       lobbyManager.OpenNetworkChannel(lobby.Id, 0, true);
       lobbyManager.ConnectVoice(lobby.Id, OnVoiceConnectResult);
@@ -250,8 +272,13 @@ namespace ProximityMine
     private void OnConnectLobbyResult(Discord.Result result, ref Discord.Lobby lobby)
     {
       _isJoiningLobby = false;
-      LogStringInfo($"Connected to lobby: {lobby.Id}");
+      LogStringInfo($"Lobby Join Result: {result}");
+      if (result != Discord.Result.Ok)
+      {
+        return;
+      }
 
+      LogStringInfo($"Connected to lobby: {lobby.Id}");
       UpdateActivity(lobby);
 
       // Connect to the network of this lobby and send everyone a message
@@ -272,25 +299,19 @@ namespace ProximityMine
 
       if (_playerGameId != null)
       {
+        LogStringInfo($"Sending player game ID to lobby");
         lobbyManager.SendLobbyMessage(_currentLobbyId, Encoding.UTF8.GetBytes(_playerGameId), OnLobbySendMessageResult);
       }
     }
 
     private void OnActivityUpdateResult(Discord.Result result)
     {
-      if (result == Discord.Result.Ok)
-      {
-        LogStringInfo($"Set activity success");
-      }
-      else
-      {
-        LogStringInfo("Activity Failed");
-      }
+      LogStringInfo($"Update Activity result: {result}");
     }
 
     private void OnVoiceConnectResult(Discord.Result voiceResult)
     {
-      LogStringInfo($"Connect to voice: {voiceResult}");
+      LogStringInfo($"Connect to voice result: {voiceResult}");
     }
 
     // Handle current user changing, can't get current user until this fires once
@@ -299,25 +320,14 @@ namespace ProximityMine
       if (_currentUserId != 0)
         UserDisconnected?.Invoke(_currentUserId);
 
-      _userInitialized = true;
-
       var currentUser = _discord.GetUserManager().GetCurrentUser();
-      LogStringInfo("Got current discord user!");
-      LogStringInfo(currentUser.Username);
-      LogStringInfo(currentUser.Id.ToString());
+      LogStringInfo($"Current user updated: {currentUser.Username} {currentUser.Id}");
 
       _currentUserId = currentUser.Id;
       _discord.GetVoiceManager().SetSelfMute(false);
 
       OnUserConnect(_currentUserId);
-
-      // Create a lobby for our local game
-      var lobbyManager = _discord.GetLobbyManager();
-      var lobbyTxn = lobbyManager.GetLobbyCreateTransaction();
-      lobbyTxn.SetCapacity(_lobbyCapacity);
-      lobbyTxn.SetType(Discord.LobbyType.Private);
-
-      lobbyManager.CreateLobby(lobbyTxn, OnLobbyCreateResult);
+      CreateDefaultLobby();
     }
 
     private void OnActivityJoin(string secret)
@@ -335,35 +345,39 @@ namespace ProximityMine
 
     private void OnMemberConnect(long lobbyID, long userID)
     {
-      LogStringInfo($"user {userID} connected to lobby: {lobbyID}");
+      LogStringInfo($"User {userID} connected to lobby: {lobbyID}");
       OnUserConnect(userID);
 
       if (!string.IsNullOrEmpty(_playerGameId))
       {
         var lobbyManager = _discord.GetLobbyManager();
-        lobbyManager.SendNetworkMessage(lobbyID, userID, 0, Encoding.UTF8.GetBytes(_playerGameId));
+        lobbyManager.SendLobbyMessage(_currentLobbyId, Encoding.UTF8.GetBytes(_playerGameId), OnLobbySendMessageResult);
+        LogStringInfo($"Sending player game ID to lobby");
       }
     }
 
     private void OnMemberDisconnect(long lobbyID, long userID)
     {
-      LogStringInfo($"user {userID} disconnected to lobby: {lobbyID}");
+      LogStringInfo($"User {userID} disconnected from lobby: {lobbyID}");
       OnUserDisconnect(userID);
     }
 
     private void OnLobbyMessage(long lobbyID, long userID, byte[] data)
     {
-      string playerGameId = Encoding.UTF8.GetString(data);
-      LogStringInfo($"got lobby player game id: {userID} {playerGameId}");
+      if (userID != _currentUserId)
+      {
+        string playerGameId = Encoding.UTF8.GetString(data);
+        LogStringInfo($"Got lobby player game id: {userID} {playerGameId}");
 
-      Player player = GetPlayer(userID);
-      player.GameId = playerGameId;
+        Player player = GetPlayer(userID);
+        player.GameId = playerGameId;
+      }
     }
 
     private void OnNetworkMessage(long lobbyID, long userID, byte channelID, byte[] data)
     {
       string playerGameId = Encoding.UTF8.GetString(data);
-      LogStringInfo($"got network player game id: {userID} {playerGameId}");
+      LogStringInfo($"Got network player game id: {userID} {playerGameId}");
 
       Player player = GetPlayer(userID);
       player.GameId = playerGameId;
