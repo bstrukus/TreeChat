@@ -215,10 +215,21 @@ namespace ProximityMine
 
     private void OnLobbyCreateResult(Discord.Result result, ref Discord.Lobby lobby)
     {
+      var lobbyManager = _discord.GetLobbyManager();
+      if (result != Discord.Result.Ok)
+      {
+        // Create a lobby for our local game
+        var lobbyTxn = lobbyManager.GetLobbyCreateTransaction();
+        lobbyTxn.SetCapacity(_lobbyCapacity);
+        lobbyTxn.SetType(Discord.LobbyType.Private);
+
+        lobbyManager.CreateLobby(lobbyTxn, OnLobbyCreateResult);
+        return;
+      }
+
       UpdateActivity(lobby);
 
       // Connect to the network of this lobby and send everyone a message
-      var lobbyManager = _discord.GetLobbyManager();
       lobbyManager.ConnectNetwork(lobby.Id);
       lobbyManager.OpenNetworkChannel(lobby.Id, 0, true);
       lobbyManager.ConnectVoice(lobby.Id, OnVoiceConnectResult);
