@@ -34,8 +34,7 @@ namespace TreeChat
       Logger.Info($"(bstru)[TreeChat.Hooks_OnEnterWorld] All players...");
       this.PrintAllPlayerData(this.players);
 
-      //this.proximityChat.Update();
-
+      this.proximityChat.SetPlayerGameId(player.name);
     }
 
     private void PrintAllPlayerData(List<Terraria.Player> players)
@@ -83,6 +82,19 @@ namespace TreeChat
       //                 this.proximityChat.SetPlay
       //             }
 
+
+      // Attempt to set player positions
+      for (int i = 0; i < this.proximityChat.UserCount; ++i)
+      {
+        long playerDiscordId = this.proximityChat.GetPlayerDiscordId(i);
+        string playerGameId = this.proximityChat.GetPlayerGameId(playerDiscordId);
+        ModPlayer player = GetPlayer(playerGameId);
+        if (player != null)
+        {
+          this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
+        }
+      }
+
       this.proximityChat.Update();
     }
 
@@ -116,7 +128,6 @@ namespace TreeChat
       this.proximityChat.UserConnected += this.ProximityChat_UserConnected;
       this.proximityChat.UserDisconnected += this.ProximityChat_UserDisconnected;
 
-      //this.setPL
     }
 
     private void OnLogString(string message)

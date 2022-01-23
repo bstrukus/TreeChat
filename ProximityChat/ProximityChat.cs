@@ -14,6 +14,7 @@ namespace ProximityMine
 
     public long LobbyOwnerId => _currentLobbyOwnerId;
     public long UserId => _currentUserId;
+    public int UserCount => _players.Count;
 
     private static readonly long kClientId = 926574841237209158;
 
@@ -124,6 +125,11 @@ namespace ProximityMine
     {
       Player player = GetPlayer(playerGameId);
       return player.DiscordId;
+    }
+
+    public long GetPlayerDiscordId(int userIndex)
+    {
+      return _players[userIndex].DiscordId;
     }
 
     public void SetPlayerPosition(long playerId, float x, float y, float z)
