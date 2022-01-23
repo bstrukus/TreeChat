@@ -103,7 +103,11 @@ namespace ProximityMine
     {
       LogStringInfo($"Set local player game Id: {playerGameId}");
 
-      if (_playerGameId != playerGameId)
+      if (_players.Count == 0)
+      {
+        _playerGameId = playerGameId;
+      }
+      else if (_playerGameId != playerGameId)
       {
         GetPlayer(_currentUserId).GameId = playerGameId;
         _playerGameId = playerGameId;
@@ -369,6 +373,9 @@ namespace ProximityMine
     {
       Player player = new Player(userId);
       _players.Add(player);
+
+      if (userId == _currentUserId)
+        player.GameId = _playerGameId;
 
       UserConnected?.Invoke(userId);
     }
