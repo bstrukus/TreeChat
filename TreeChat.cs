@@ -91,6 +91,7 @@ namespace TreeChat
         ModPlayer player = GetPlayer(playerGameId);
         if (player != null)
         {
+          OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
           this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
         }
       }
