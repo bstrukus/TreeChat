@@ -315,8 +315,11 @@ namespace ProximityMine
       LogStringInfo($"user {userID} connected to lobby: {lobbyID}");
       OnUserConnect(userID);
 
-      var lobbyManager = _discord.GetLobbyManager();
-      lobbyManager.SendNetworkMessage(lobbyID, userID, 0, Encoding.UTF8.GetBytes(_playerGameId));
+      if (!string.IsNullOrEmpty(_playerGameId))
+      {
+        var lobbyManager = _discord.GetLobbyManager();
+        lobbyManager.SendNetworkMessage(lobbyID, userID, 0, Encoding.UTF8.GetBytes(_playerGameId));
+      }
     }
 
     private void OnMemberDisconnect(long lobbyID, long userID)
