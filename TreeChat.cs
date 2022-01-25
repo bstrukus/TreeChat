@@ -94,6 +94,14 @@ namespace TreeChat
                         OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
                         this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
                     }
+                    else
+                    {
+                        OnLogString($"Couldn't find terraria player with name {playerGameId}");
+                    }
+                }
+                else
+                {
+                    OnLogString($"Skipping player with discord ID {playerDiscordId} as game id is null");
                 }
             }
 
