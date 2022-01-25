@@ -20,7 +20,6 @@ namespace TreeChat
 
             this.players = new List<Terraria.Player>();
 
-
             this.CreateProximityChat();
 
             Terraria.Player.Hooks.OnEnterWorld += this.Hooks_OnEnterWorld;
@@ -64,7 +63,7 @@ namespace TreeChat
             //             {
             //                 this.CreateProximityChat();
             //             }
-            // 
+            //
             //             this.proximityChat.Update();
 
             //             foreach (var player in this.players)
@@ -81,7 +80,6 @@ namespace TreeChat
             //             {
             //                 this.proximityChat.SetPlay
             //             }
-
 
             // Attempt to set player positions
             for (int i = 0; i < this.proximityChat.UserCount; ++i)
@@ -134,7 +132,6 @@ namespace TreeChat
 
             this.proximityChat.UserConnected += this.ProximityChat_UserConnected;
             this.proximityChat.UserDisconnected += this.ProximityChat_UserDisconnected;
-
         }
 
         private void OnLogString(string message)
