@@ -95,7 +95,7 @@ namespace ProximityMine
           float zDelta = (remotePlayer.Z - localPlayer.Z);
           float distToPlayer = (float)Math.Sqrt(xDelta * xDelta + yDelta * yDelta + zDelta * zDelta);
           float distScalar = (distToPlayer - _voiceMinDistance) / (_voiceMaxDistance - _voiceMinDistance);
-          float volume = 1.0f - Math.Clamp(distScalar, 0f, 1f);
+          float volume = 1.0f - this.Clamp(distScalar, 0f, 1f);
 
           voiceManager.SetLocalVolume(remotePlayer.DiscordId, (byte)(volume * 200));
         }
@@ -103,6 +103,15 @@ namespace ProximityMine
 
       // Pump the event look to ensure all callbacks continue to get fired.
       _discord.RunCallbacks();
+    }
+
+    private float Clamp(float val, float min, float max)
+    {
+        if (val < min)
+            return min;
+        if (val > max)
+            return max;
+        return val;
     }
 
     public void SetLobbyCapacity(uint capacity)
