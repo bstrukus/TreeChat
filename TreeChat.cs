@@ -81,29 +81,45 @@ namespace TreeChat
             //                 this.proximityChat.SetPlay
             //             }
 
-            // Attempt to set player positions
-            for (int i = 0; i < this.proximityChat.UserCount; ++i)
+            for (int i = 0; i < Terraria.Main.player.Length; ++i)
             {
-                long playerDiscordId = this.proximityChat.GetPlayerDiscordId(i);
-                string playerGameId = this.proximityChat.GetPlayerGameId(playerDiscordId);
-                if (!string.IsNullOrEmpty(playerGameId))
+                var player = Terraria.Main.player[i];
+                long playerDiscordId = this.proximityChat.GetPlayerDiscordId(player.name);
+
+                if (playerDiscordId != 0)
                 {
-                    ModPlayer player = GetPlayer(playerGameId);
-                    if (player != null)
-                    {
-                        OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
-                        this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
-                    }
-                    else
-                    {
-                        OnLogString($"Couldn't find terraria player with name {playerGameId}");
-                    }
+                    OnLogString($"Updating player {player.name} with position {player.position.X}, {player.position.Y}");
+                    this.proximityChat.SetPlayerPosition(playerDiscordId, player.position.X, player.position.Y, 0);
                 }
                 else
                 {
-                    OnLogString($"Skipping player with discord ID {playerDiscordId} as game id is null");
+                    OnLogString($"Skipping player {player.name}, no discord ID mapping yet");
                 }
             }
+
+            // Attempt to set player positions
+            // for (int i = 0; i < this.proximityChat.UserCount; ++i)
+            // {
+            //     long playerDiscordId = this.proximityChat.GetPlayerDiscordId(i);
+            //     string playerGameId = this.proximityChat.GetPlayerGameId(playerDiscordId);
+            //     if (!string.IsNullOrEmpty(playerGameId))
+            //     {
+            //         ModPlayer player = GetPlayer(playerGameId);
+            //         if (player != null)
+            //         {
+            //             OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
+            //             this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
+            //         }
+            //         else
+            //         {
+            //             OnLogString($"Couldn't find terraria player with name {playerGameId}");
+            //         }
+            //     }
+            //     else
+            //     {
+            //         OnLogString($"Skipping player with discord ID {playerDiscordId} as game id is null");
+            //     }
+            // }
 
             this.proximityChat.Update();
         }
