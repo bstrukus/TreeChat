@@ -37,7 +37,7 @@ namespace ProximityMine
     private bool _isJoiningLobby = false;
     private uint _lobbyCapacity = 4;
     private float _voiceMinDistance = 1;
-    private float _voiceMaxDistance = 10;
+    private float _voiceMaxDistance = 30;
     private string _playerGameId = null;
     private Discord.Discord _discord;
     private List<Player> _players = new List<Player>();
@@ -95,6 +95,7 @@ namespace ProximityMine
           float zDelta = (remotePlayer.Z - localPlayer.Z);
           float distToPlayer = (float)Math.Sqrt(xDelta * xDelta + yDelta * yDelta + zDelta * zDelta);
           float distScalar = (distToPlayer - _voiceMinDistance) / (_voiceMaxDistance - _voiceMinDistance);
+          LogStringInfo($"(bstru)[ProximityChat.Update] Dist Scalar: {distScalar}");
           float volume = 1.0f - this.Clamp(distScalar, 0f, 1f);
 
           voiceManager.SetLocalVolume(remotePlayer.DiscordId, (byte)(volume * 200));

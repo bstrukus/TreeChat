@@ -88,11 +88,14 @@ namespace TreeChat
       {
         long playerDiscordId = this.proximityChat.GetPlayerDiscordId(i);
         string playerGameId = this.proximityChat.GetPlayerGameId(playerDiscordId);
-        ModPlayer player = GetPlayer(playerGameId);
-        if (player != null)
+        if (!string.IsNullOrEmpty(playerGameId))
         {
-          OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
-          this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
+            ModPlayer player = GetPlayer(playerGameId);
+            if (player != null)
+            {
+                OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
+                this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
+            }
         }
       }
 
