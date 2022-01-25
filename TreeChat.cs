@@ -10,16 +10,12 @@ namespace TreeChat
     public class TreeChat : Mod
     {
         private ProximityMine.ProximityChat proximityChat;
-        private List<Terraria.Player> players;
 
         public override void Load()
         {
-            Logger.Info($"(bstru)[TreeChat.Load] CALLED");
+            Logger.Info($"[TreeChat.Load] CALLED");
 
             base.Load();
-
-            this.players = new List<Terraria.Player>();
-
             this.CreateProximityChat();
 
             Terraria.Player.Hooks.OnEnterWorld += this.Hooks_OnEnterWorld;
@@ -27,116 +23,81 @@ namespace TreeChat
 
         private void Hooks_OnEnterWorld(Terraria.Player player)
         {
-            Logger.Info($"(bstru)[TreeChat.Hooks_OnEnterWorld] CALLED");
-            this.players.Add(player);
+            Logger.Info($"[TreeChat.Hooks_OnEnterWorld] CALLED");
 
-            Logger.Info($"(bstru)[TreeChat.Hooks_OnEnterWorld] All players...");
-            this.PrintAllPlayerData(this.players);
+            Logger.Info($"[TreeChat.Hooks_OnEnterWorld] All players...");
+            this.PrintAllPlayerData(Terraria.Main.player);
 
+            // Hey, here is the identifier that other Terraria clients can get my player using
+            // Tell ProximityChat, our local Discord ID maps to this Terraria identifier
             this.proximityChat.SetPlayerGameId(player.name);
         }
 
-        private void PrintAllPlayerData(List<Terraria.Player> players)
+        private void PrintAllPlayerData(IReadOnlyList<Terraria.Player> players)
         {
             foreach (var player in players)
             {
-                Logger.Info($"(bstru)[TreeChat.Hooks_OnEnterWorld] Name: {player.name}");
-                Logger.Info($"(bstru)[TreeChat.PrintAllPlayerData] WhoAmI: {player.whoAmI}");
+                Logger.Info($"[TreeChat.Hooks_OnEnterWorld] Name: {player.name}");
+                Logger.Info($"[TreeChat.PrintAllPlayerData] WhoAmI: {player.whoAmI}");
             }
         }
 
         private void ProximityChat_UserConnected(long userDiscordId)
         {
-            Logger.Info($"(bstru)[TreeChat.ProximityChat_UserConnected] CALLED");
+            Logger.Info($"[TreeChat.ProximityChat_UserConnected] CALLED");
         }
 
         private void ProximityChat_UserDisconnected(long userDiscordId)
         {
-            Logger.Info($"(bstru)[TreeChat.ProximityChat_UserDisconnected] {userDiscordId} has left the game");
+            Logger.Info($"[TreeChat.ProximityChat_UserDisconnected] {userDiscordId} has left the game");
         }
 
         public override void UpdateUI(GameTime gameTime)
         {
             base.UpdateUI(gameTime);
-
-            //             if (this.proximityChat == null)
-            //             {
-            //                 this.CreateProximityChat();
-            //             }
-            //
-            //             this.proximityChat.Update();
-
-            //             foreach (var player in this.players)
-            //             {
-            //                 Logger.Info($"(bstru)[TreeChat.UpdateUI] {player.name}: {player.position}");
-            //             }
         }
 
         public override void PostUpdateEverything()
         {
             base.PostUpdateEverything();
 
-            //             foreach (var player in this.players)
-            //             {
-            //                 this.proximityChat.SetPlay
-            //             }
-
             for (int i = 0; i < Terraria.Main.player.Length; ++i)
             {
                 var player = Terraria.Main.player[i];
-                long playerDiscordId = this.proximityChat.GetPlayerDiscordId(player.name);
-
-                if (playerDiscordId != 0)
+                if (player != null && !string.IsNullOrEmpty(player.name))
                 {
-                    OnLogString($"Updating player {player.name} with position {player.position.X}, {player.position.Y}");
-                    this.proximityChat.SetPlayerPosition(playerDiscordId, player.position.X, player.position.Y, 0);
-                }
-                else
-                {
-                    OnLogString($"Skipping player {player.name}, no discord ID mapping yet");
+                    long playerDiscordId = this.proximityChat.GetPlayerDiscordId(player.name);
+                    if (playerDiscordId != 0)
+                    {
+                        OnLogString($"Updating player {player.name} with position {player.position.X}, {player.position.Y}");
+                        this.proximityChat.SetPlayerPosition(playerDiscordId, player.position.X, player.position.Y, 0);
+                    }
+                    else
+                    {
+                        OnLogString($"Skipping player {player.name}, no discord ID mapping yet");
+                    }
                 }
             }
-
-            // Attempt to set player positions
-            // for (int i = 0; i < this.proximityChat.UserCount; ++i)
-            // {
-            //     long playerDiscordId = this.proximityChat.GetPlayerDiscordId(i);
-            //     string playerGameId = this.proximityChat.GetPlayerGameId(playerDiscordId);
-            //     if (!string.IsNullOrEmpty(playerGameId))
-            //     {
-            //         ModPlayer player = GetPlayer(playerGameId);
-            //         if (player != null)
-            //         {
-            //             OnLogString($"Updating player {playerGameId} with position {player.player.position.X}, {player.player.position.Y}");
-            //             this.proximityChat.SetPlayerPosition(playerDiscordId, player.player.position.X, player.player.position.Y, 0);
-            //         }
-            //         else
-            //         {
-            //             OnLogString($"Couldn't find terraria player with name {playerGameId}");
-            //         }
-            //     }
-            //     else
-            //     {
-            //         OnLogString($"Skipping player with discord ID {playerDiscordId} as game id is null");
-            //     }
-            // }
 
             this.proximityChat.Update();
         }
 
         public override void Close()
         {
-            Logger.Info($"(bstru)[TreeChat.Close] CALLED");
+            Logger.Info($"[TreeChat.Close] CALLED");
             base.Close();
         }
 
         public override void Unload()
         {
-            Logger.Info($"(bstru)[TreeChat.Unload] CALLED");
+            Logger.Info($"[TreeChat.Unload] CALLED");
             base.Unload();
 
+            ProximityMine.ProximityChat.LogInfo -= OnLogString;
             this.proximityChat.UserConnected -= this.ProximityChat_UserConnected;
             this.proximityChat.UserDisconnected -= this.ProximityChat_UserDisconnected;
+            this.proximityChat.Dispose();
+            this.proximityChat = null;
 
             Terraria.Player.Hooks.OnEnterWorld -= this.Hooks_OnEnterWorld;
         }
@@ -147,8 +108,7 @@ namespace TreeChat
 
             this.proximityChat = new ProximityMine.ProximityChat();
             this.proximityChat.Initialize();
-            // Hey, here is the identifier that other Terraria clients can get my player using
-            // Tell ProximityChat, our local Discord ID maps to this Terraria identifier
+
             this.proximityChat.SetLobbyCapacity(8);
 
             this.proximityChat.VoiceMinDistance = 10;
@@ -160,7 +120,7 @@ namespace TreeChat
 
         private void OnLogString(string message)
         {
-            Logger.Info($"(bstru)[TreeChat.OnLogString] {message}");
+            Logger.Info($"[TreeChat.OnLogString] {message}");
         }
     }
 }

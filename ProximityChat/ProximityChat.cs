@@ -40,6 +40,7 @@ namespace ProximityMine
         private float _voiceMinDistance = 1;
         private float _voiceMaxDistance = 10;
         private string _playerGameId = null;
+        private int _lobbyCreateRetryTimer;
         private Discord.Discord _discord;
         private List<Player> _players = new List<Player>();
 
@@ -103,6 +104,16 @@ namespace ProximityMine
                 }
             }
 
+            // Handle retry lobby creation
+            if (_lobbyCreateRetryTimer > 0)
+            {
+                _lobbyCreateRetryTimer -= 1;
+                if (_lobbyCreateRetryTimer <= 0)
+                {
+                    CreateDefaultLobby();
+                }
+            }
+
             // Pump the event look to ensure all callbacks continue to get fired.
             _discord.RunCallbacks();
         }
@@ -155,7 +166,10 @@ namespace ProximityMine
         public long GetPlayerDiscordId(string playerGameId)
         {
             Player player = GetPlayer(playerGameId);
-            return player.DiscordId;
+            if (player != null)
+                return player.DiscordId;
+            else
+                return 0;
         }
 
         public long GetPlayerDiscordId(int userIndex)
@@ -173,7 +187,9 @@ namespace ProximityMine
 
         public void Dispose()
         {
+            LogStringInfo($"Proximity Chat shutting down...");
             _discord.Dispose();
+            _discord = null;
         }
 
         private void UpdateActivity(Discord.Lobby lobby)
@@ -193,18 +209,18 @@ namespace ProximityMine
             var activity = new Discord.Activity
             {
                 Party =
-        {
-          Id = lobby.Id.ToString(),
-          Size =
-          {
-            CurrentSize = _discord.GetLobbyManager().MemberCount(lobby.Id),
-            MaxSize = (int)lobby.Capacity
-          }
-        },
+                {
+                Id = lobby.Id.ToString(),
+                Size =
+                {
+                    CurrentSize = _discord.GetLobbyManager().MemberCount(lobby.Id),
+                    MaxSize = (int)lobby.Capacity
+                }
+                },
                 Secrets =
-        {
-          Join = secret
-        }
+                {
+                Join = secret
+                }
             };
 
             // Set this activity as our current one for the user
@@ -268,7 +284,7 @@ namespace ProximityMine
             // If the lobby failed to create for some reason - try again
             if (result != Discord.Result.Ok)
             {
-                CreateDefaultLobby();
+                _lobbyCreateRetryTimer = 30;
                 return;
             }
 
