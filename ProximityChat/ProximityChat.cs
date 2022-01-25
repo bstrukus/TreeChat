@@ -37,7 +37,7 @@ namespace ProximityMine
     private bool _isJoiningLobby = false;
     private uint _lobbyCapacity = 4;
     private float _voiceMinDistance = 1;
-    private float _voiceMaxDistance = 30;
+    private float _voiceMaxDistance = 10;
     private string _playerGameId = null;
     private Discord.Discord _discord;
     private List<Player> _players = new List<Player>();
